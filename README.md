@@ -8,7 +8,7 @@ Site tip cazinou cu roată de premii. La prima vizită primești **1000 rotiri**
 |--------|--------|
 | Back Shots | `public/assets/rewards/backshots.png` |
 | Lap Dance | `public/assets/rewards/lap-dance.png` |
-| Big Hug | `public/assets/rewards/big-hug.png` |
+| Bear Hug | `public/assets/rewards/big-hug.png` |
 | Hand Shake | `public/assets/rewards/handshake.png` |
 | 3 Some | `public/assets/rewards/threesome.png` |
 | o Suguluta | `public/assets/rewards/suguluta.png` |

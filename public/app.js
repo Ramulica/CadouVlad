@@ -22,11 +22,11 @@
     },
     {
       id: "big-hug",
-      label: "Bug Hug",
+      label: "Bear Hug",
       color: "#2a3d8f",
       text: "#fff3d6",
       image: "/assets/rewards/big-hug.png",
-      copy: "Îmbrățișare epică. Bug Hug unlocked.",
+      copy: "Îmbrățișare epică. Bear Hug unlocked.",
     },
     {
       id: "handshake",
@@ -154,21 +154,22 @@
     );
   }
 
-  function drawCoverImage(img, dx, dy, dw, dh) {
+  /** Fit full image inside box — no cropping */
+  function drawContainImage(img, dx, dy, dw, dh) {
     const ir = img.width / img.height;
     const tr = dw / dh;
-    let sx = 0;
-    let sy = 0;
-    let sw = img.width;
-    let sh = img.height;
+    let w = dw;
+    let h = dh;
+    let x = dx;
+    let y = dy;
     if (ir > tr) {
-      sw = img.height * tr;
-      sx = (img.width - sw) / 2;
+      h = dw / ir;
+      y = dy + (dh - h) / 2;
     } else {
-      sh = img.width / tr;
-      sy = (img.height - sh) / 2;
+      w = dh * ir;
+      x = dx + (dw - w) / 2;
     }
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    ctx.drawImage(img, x, y, w, h);
   }
 
   function paintWheel() {
@@ -199,26 +200,20 @@
       ctx.fill();
 
       if (img) {
-        // Place photo in outer half of the wedge
-        const photoR = radius * 0.62;
+        // Full photo in the wedge — contain, no crop
+        const photoR = radius * 0.58;
         const px = cx + Math.cos(mid) * photoR;
         const py = cy + Math.sin(mid) * photoR;
-        const photoSize = radius * 0.42;
+        const boxW = radius * 0.5;
+        const boxH = radius * 0.38;
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(px, py, photoSize / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        drawCoverImage(img, px - photoSize / 2, py - photoSize / 2, photoSize, photoSize);
-        ctx.restore();
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.fillRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
+        drawContainImage(img, px - boxW / 2, py - boxH / 2, boxW, boxH);
 
-        // gold ring around photo
-        ctx.beginPath();
-        ctx.arc(px, py, photoSize / 2, 0, Math.PI * 2);
         ctx.strokeStyle = "#f5c842";
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
       }
 
       // dark strip near rim for text readability
@@ -226,7 +221,7 @@
       ctx.arc(cx, cy, radius, start, end);
       ctx.arc(cx, cy, radius * 0.78, end, start, true);
       ctx.closePath();
-      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
       ctx.fill();
 
       ctx.restore();

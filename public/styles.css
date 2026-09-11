@@ -290,9 +290,9 @@ body {
 }
 
 .reward-tile__img {
-  width: 58px;
+  width: 72px;
   height: 58px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
   border: 2px solid rgba(245, 200, 66, 0.45);
   background: #1a0a12;

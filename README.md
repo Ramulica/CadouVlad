@@ -15,7 +15,7 @@ Site tip cazinou cu roată de premii. La prima vizită primești **1000 rotiri**
 | Gang Bang | `public/assets/rewards/gangbang.png` |
 | SexPosition.club | `public/assets/rewards/sexposition.png` |
 | Romantic Date | `public/assets/rewards/romantic-date.png` |
-| Sabiutele cu Pula | `public/assets/rewards/sabiutele.png` |
+| Sabiute cu Pula | `public/assets/rewards/sabiutele.png` |
 
 ## Local
 

@@ -78,11 +78,11 @@
     },
     {
       id: "sabiutele",
-      label: "Sabiutele cy Pula",
+      label: "Sabiute cu Pula",
       color: "#1b4f72",
       text: "#fff3d6",
       image: "/assets/rewards/sabiutele.png",
-      copy: "Duel legendar: Sabiutele cy Pula.",
+      copy: "Duel legendar: Sabiute cu Pula.",
     },
   ];
 

@@ -1,56 +1,109 @@
 (() => {
   const STARTING_SPINS = 1000;
   const STORAGE_KEY = "casino-vlad-spins";
+  const BASE_SIZE = 480;
 
   const REWARDS = [
     {
-      id: "pupic",
-      label: "Pupic",
+      id: "backshots",
+      label: "Back Shots",
+      short: "BACK",
       color: "#c41e3a",
       text: "#fff3d6",
-      image: "/assets/rewards/pupic.svg",
-      copy: "Un pupic meritat. Colectează imediat.",
+      image: "/assets/rewards/backshots.png",
+      copy: "Jackpotul clasic. Colectează Back Shots.",
     },
     {
-      id: "imbratisare",
-      label: "Îmbrățișare",
+      id: "lap-dance",
+      label: "Lap Dance",
+      short: "LAP",
       color: "#1a6b4a",
       text: "#fff3d6",
-      image: "/assets/rewards/imbratisare.svg",
-      copy: "O îmbrățișare caldă — jackpot emoțional.",
+      image: "/assets/rewards/lap-dance.png",
+      copy: "Show privat pe scaun. Lap Dance unlocked.",
     },
     {
-      id: "mangaiere",
-      label: "Mângâiere",
+      id: "big-hug",
+      label: "Bug Hug",
+      short: "HUG",
       color: "#2a3d8f",
       text: "#fff3d6",
-      image: "/assets/rewards/mangaiere.svg",
-      copy: "Mângâiere premium. Limită zilnică: unlimited.",
+      image: "/assets/rewards/big-hug.png",
+      copy: "Îmbrățișare epică. Bug Hug unlocked.",
     },
     {
-      id: "backshots",
-      label: "Backshots",
+      id: "handshake",
+      label: "Hand Sacke",
+      short: "SHAKE",
       color: "#7a1fa2",
       text: "#fff3d6",
-      image: "/assets/rewards/backshots.svg",
-      copy: "Premiul VIP. Ai lovit jackpotul.",
+      image: "/assets/rewards/handshake.png",
+      copy: "Respect. Hand Sacke oficial.",
+    },
+    {
+      id: "threesome",
+      label: "3 Some",
+      short: "3SOME",
+      color: "#b85c00",
+      text: "#fff3d6",
+      image: "/assets/rewards/threesome.png",
+      copy: "Party de trei. 3 Some confirmat.",
+    },
+    {
+      id: "suguluta",
+      label: "o Suguluta",
+      short: "SUGU",
+      color: "#8b1e3f",
+      text: "#fff3d6",
+      image: "/assets/rewards/suguluta.png",
+      copy: "Premiu special: o Suguluță.",
+    },
+    {
+      id: "gangbang",
+      label: "Gang Bang",
+      short: "GANG",
+      color: "#0e5c5c",
+      text: "#fff3d6",
+      image: "/assets/rewards/gangbang.png",
+      copy: "Full lobby. Gang Bang activat.",
+    },
+    {
+      id: "sexposition",
+      label: "SexPosition.club",
+      short: "SPC",
+      color: "#4a148c",
+      text: "#fff3d6",
+      image: "/assets/rewards/sexposition.png",
+      copy: "Catalog VIP de pe SexPosition.club.",
+    },
+    {
+      id: "romantic-date",
+      label: "Romantic Date",
+      short: "DATE",
+      color: "#a61b4a",
+      text: "#fff3d6",
+      image: "/assets/rewards/romantic-date.png",
+      copy: "Cină la lumina lumânărilor. Romantic Date.",
+    },
+    {
+      id: "sabiutele",
+      label: "Sabiutele cy Pula",
+      short: "SABII",
+      color: "#1b4f72",
+      text: "#fff3d6",
+      image: "/assets/rewards/sabiutele.png",
+      copy: "Duel legendar: Sabiutele cy Pula.",
     },
   ];
 
-  // 8 segments — each reward twice for a fuller casino wheel
-  const SEGMENTS = [
-    REWARDS[0],
-    REWARDS[1],
-    REWARDS[2],
-    REWARDS[3],
-    REWARDS[0],
-    REWARDS[1],
-    REWARDS[2],
-    REWARDS[3],
-  ];
+  // One segment per reward, in the exact order requested
+  const SEGMENTS = REWARDS.slice();
+  const ARC = (Math.PI * 2) / SEGMENTS.length;
+  const CONFETTI_COLORS = ["#f5c842", "#ff2d55", "#00f5d4", "#ff4ecd", "#ffffff", "#ffe566"];
 
   const canvas = document.getElementById("wheel");
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+  const rotator = document.getElementById("wheelRotator");
   const spinBtn = document.getElementById("spinBtn");
   const spinsDisplay = document.querySelector(".spins-chip__value");
   const winModal = document.getElementById("winModal");
@@ -58,17 +111,14 @@
   const winImage = document.getElementById("winImage");
   const winCopy = document.getElementById("winCopy");
   const claimBtn = document.getElementById("claimBtn");
+  const modalBackdrop = document.getElementById("modalBackdrop");
   const rewardRail = document.getElementById("rewardRail");
-  const confettiCanvas = document.getElementById("confetti");
-  const confettiCtx = confettiCanvas.getContext("2d");
-  const sparkles = document.getElementById("sparkles");
-  const wheelLights = document.getElementById("wheelLights");
+  const confettiLayer = document.getElementById("confetti");
 
   let spins = loadSpins();
-  let rotation = 0;
+  let rotationDeg = 0;
   let spinning = false;
-  let confettiPieces = [];
-  let confettiRaf = null;
+  let audioCtx = null;
 
   function loadSpins() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -89,54 +139,26 @@
     spinBtn.disabled = spinning || spins <= 0;
   }
 
-  function makeSparkles() {
-    const count = 40;
-    for (let i = 0; i < count; i++) {
-      const s = document.createElement("span");
-      s.className = "sparkle";
-      s.style.left = `${Math.random() * 100}%`;
-      s.style.top = `${Math.random() * 100}%`;
-      s.style.setProperty("--dur", `${1.8 + Math.random() * 2.5}s`);
-      s.style.setProperty("--delay", `${Math.random() * 3}s`);
-      sparkles.appendChild(s);
-    }
+  function setupCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+    canvas.width = Math.round(BASE_SIZE * dpr);
+    canvas.height = Math.round(BASE_SIZE * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function makeLights() {
-    const count = 24;
-    for (let i = 0; i < count; i++) {
-      const bulb = document.createElement("span");
-      bulb.className = "wheel-light";
-      const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-      const r = 48.5;
-      bulb.style.left = `${50 + Math.cos(angle) * r}%`;
-      bulb.style.top = `${50 + Math.sin(angle) * r}%`;
-      wheelLights.appendChild(bulb);
-    }
-  }
-
-  function renderRewardRail() {
-    rewardRail.innerHTML = REWARDS.map(
-      (r) => `
-      <article class="reward-tile" data-id="${r.id}">
-        <img class="reward-tile__img" src="${r.image}" alt="${r.label}" />
-        <span class="reward-tile__name">${r.label}</span>
-      </article>`
-    ).join("");
-  }
-
-  function drawWheel() {
-    const size = canvas.width;
+  function paintWheel() {
+    const size = BASE_SIZE;
     const cx = size / 2;
     const cy = size / 2;
-    const radius = size / 2 - 8;
-    const arc = (Math.PI * 2) / SEGMENTS.length;
+    const radius = size / 2 - 4;
 
-    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = "#1a0a12";
+    ctx.fillRect(0, 0, size, size);
 
-    SEGMENTS.forEach((seg, i) => {
-      const start = rotation + i * arc;
-      const end = start + arc;
+    for (let i = 0; i < SEGMENTS.length; i++) {
+      const seg = SEGMENTS[i];
+      const start = i * ARC;
+      const end = start + ARC;
 
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -145,104 +167,86 @@
       ctx.fillStyle = seg.color;
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(245, 200, 66, 0.85)";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#f5c842";
+      ctx.lineWidth = 2;
       ctx.stroke();
 
-      // inner shine wedge
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, radius, start, end);
-      ctx.closePath();
-      ctx.clip();
-      const grad = ctx.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius);
-      grad.addColorStop(0, "rgba(255,255,255,0.18)");
-      grad.addColorStop(0.55, "rgba(255,255,255,0)");
-      grad.addColorStop(1, "rgba(0,0,0,0.25)");
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.restore();
-
-      // label
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(start + arc / 2);
+      ctx.rotate(start + ARC / 2);
       ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
       ctx.fillStyle = seg.text;
-      ctx.font = "bold 28px Oswald, sans-serif";
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 6;
-      ctx.fillText(seg.label.toUpperCase(), radius - 28, 8);
+      ctx.font = "700 15px Oswald, sans-serif";
+      ctx.fillText(seg.short, radius - 18, 0);
       ctx.restore();
-    });
+    }
 
-    // center hub ring
     ctx.beginPath();
-    ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 52, 0, Math.PI * 2);
     ctx.fillStyle = "#12080f";
     ctx.fill();
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.strokeStyle = "#f5c842";
     ctx.stroke();
   }
 
-  function easeOutCubic(t) {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  function getWinningIndex(finalRotation) {
-    const arc = (Math.PI * 2) / SEGMENTS.length;
-    // pointer is at top (-π/2). Normalize so segment under pointer wins.
-    const normalized = ((Math.PI * 1.5 - (finalRotation % (Math.PI * 2))) + Math.PI * 2) % (Math.PI * 2);
-    return Math.floor(normalized / arc) % SEGMENTS.length;
-  }
-
-  function playTick() {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!playTick.ctx) playTick.ctx = new AudioCtx();
-      const ctxA = playTick.ctx;
-      const o = ctxA.createOscillator();
-      const g = ctxA.createGain();
-      o.type = "square";
-      o.frequency.value = 880 + Math.random() * 220;
-      g.gain.value = 0.03;
-      o.connect(g);
-      g.connect(ctxA.destination);
-      o.start();
-      g.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + 0.05);
-      o.stop(ctxA.currentTime + 0.05);
-    } catch (_) {
-      /* ignore audio errors */
+  function setRotator(deg, withTransition, durationMs) {
+    if (!withTransition) {
+      rotator.style.transition = "none";
+    } else {
+      rotator.style.transition = `transform ${durationMs}ms cubic-bezier(0.15, 0.85, 0.05, 1)`;
     }
+    rotator.style.transform = `rotate(${deg}deg)`;
+  }
+
+  function getWinningIndex(deg) {
+    const rad = ((deg % 360) * Math.PI) / 180;
+    const normalized =
+      (((Math.PI * 1.5 - rad) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    return Math.floor(normalized / ARC) % SEGMENTS.length;
+  }
+
+  function ensureAudio() {
+    if (audioCtx) return audioCtx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    audioCtx = new AC();
+    return audioCtx;
   }
 
   function playWinFanfare() {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctxA = playTick.ctx || new AudioCtx();
-      playTick.ctx = ctxA;
-      const notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach((freq, i) => {
-        const o = ctxA.createOscillator();
-        const g = ctxA.createGain();
+      const a = ensureAudio();
+      if (!a) return;
+      if (a.state === "suspended") a.resume();
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+        const o = a.createOscillator();
+        const g = a.createGain();
         o.type = "triangle";
         o.frequency.value = freq;
         g.gain.value = 0.0001;
         o.connect(g);
-        g.connect(ctxA.destination);
-        const t = ctxA.currentTime + i * 0.12;
+        g.connect(a.destination);
+        const t = a.currentTime + i * 0.1;
         o.start(t);
-        g.gain.exponentialRampToValueAtTime(0.08, t + 0.03);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
-        o.stop(t + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.06, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        o.stop(t + 0.25);
       });
     } catch (_) {
       /* ignore */
     }
+  }
+
+  function renderRewardRail() {
+    rewardRail.innerHTML = REWARDS.map(
+      (r) => `
+      <article class="reward-tile" data-id="${r.id}">
+        <img class="reward-tile__img" src="${r.image}" alt="${r.label}" loading="lazy" />
+        <span class="reward-tile__name">${r.label}</span>
+      </article>`
+    ).join("");
   }
 
   function spin() {
@@ -250,51 +254,37 @@
 
     spins -= 1;
     saveSpins();
-    updateSpinsUI();
     spinning = true;
-    spinBtn.classList.add("is-spinning");
+    document.body.classList.add("is-spinning");
+    updateSpinsUI();
 
-    const arc = (Math.PI * 2) / SEGMENTS.length;
     const targetIndex = Math.floor(Math.random() * SEGMENTS.length);
-    const extraTurns = 5 + Math.floor(Math.random() * 4);
-    // Align segment center under pointer at -π/2
-    const targetAngle =
-      Math.PI * 1.5 - (targetIndex * arc + arc / 2) - (rotation % (Math.PI * 2));
-    const normalizedTarget = ((targetAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-    const totalDelta = extraTurns * Math.PI * 2 + normalizedTarget;
+    const extraTurns = 6 + Math.floor(Math.random() * 4);
+    const duration = 4200 + Math.floor(Math.random() * 800);
 
-    const start = rotation;
-    const duration = 4500 + Math.random() * 1200;
-    const t0 = performance.now();
-    let lastSeg = -1;
+    const segmentCenterDeg = ((targetIndex + 0.5) * 360) / SEGMENTS.length;
+    const desiredMod = (((-90 - segmentCenterDeg) % 360) + 360) % 360;
+    const currentMod = ((rotationDeg % 360) + 360) % 360;
+    let delta = desiredMod - currentMod;
+    if (delta < 0) delta += 360;
+    const totalDelta = extraTurns * 360 + delta;
+    const finalDeg = rotationDeg + totalDelta;
 
-    function frame(now) {
-      const t = Math.min(1, (now - t0) / duration);
-      const eased = easeOutCubic(t);
-      rotation = start + totalDelta * eased;
-      drawWheel();
+    setRotator(rotationDeg, false, 0);
+    void rotator.offsetWidth;
+    setRotator(finalDeg, true, duration);
 
-      const currentSeg = Math.floor(
-        (((Math.PI * 1.5 - (rotation % (Math.PI * 2))) + Math.PI * 2) % (Math.PI * 2)) / arc
-      );
-      if (currentSeg !== lastSeg) {
-        lastSeg = currentSeg;
-        playTick();
-      }
+    const onEnd = (e) => {
+      if (e.propertyName !== "transform") return;
+      rotator.removeEventListener("transitionend", onEnd);
+      rotationDeg = finalDeg;
+      spinning = false;
+      document.body.classList.remove("is-spinning");
+      updateSpinsUI();
+      showWin(SEGMENTS[getWinningIndex(rotationDeg)]);
+    };
 
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        spinning = false;
-        spinBtn.classList.remove("is-spinning");
-        const winIndex = getWinningIndex(rotation);
-        const reward = SEGMENTS[winIndex];
-        showWin(reward);
-        updateSpinsUI();
-      }
-    }
-
-    requestAnimationFrame(frame);
+    rotator.addEventListener("transitionend", onEnd);
   }
 
   function highlightReward(id) {
@@ -311,78 +301,39 @@
     winModal.hidden = false;
     highlightReward(reward.id);
     playWinFanfare();
-    launchConfetti();
+    burstConfetti();
   }
 
   function hideWin() {
     winModal.hidden = true;
-    stopConfetti();
+    confettiLayer.replaceChildren();
   }
 
-  function resizeConfetti() {
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-
-  function launchConfetti() {
-    resizeConfetti();
-    const colors = ["#f5c842", "#ff2d55", "#00f5d4", "#ff4ecd", "#ffffff", "#ffe566"];
-    confettiPieces = Array.from({ length: 140 }, () => ({
-      x: Math.random() * confettiCanvas.width,
-      y: -20 - Math.random() * confettiCanvas.height * 0.4,
-      w: 6 + Math.random() * 8,
-      h: 8 + Math.random() * 10,
-      vx: -2 + Math.random() * 4,
-      vy: 2 + Math.random() * 4,
-      rot: Math.random() * Math.PI,
-      vr: -0.2 + Math.random() * 0.4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-    }));
-
-    if (confettiRaf) cancelAnimationFrame(confettiRaf);
-
-    function tick() {
-      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-      confettiPieces.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.05;
-        p.rot += p.vr;
-        confettiCtx.save();
-        confettiCtx.translate(p.x, p.y);
-        confettiCtx.rotate(p.rot);
-        confettiCtx.fillStyle = p.color;
-        confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        confettiCtx.restore();
-      });
-      confettiPieces = confettiPieces.filter((p) => p.y < confettiCanvas.height + 40);
-      if (confettiPieces.length) {
-        confettiRaf = requestAnimationFrame(tick);
-      }
+  function burstConfetti() {
+    confettiLayer.replaceChildren();
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 36; i++) {
+      const el = document.createElement("span");
+      el.className = "confetti-piece";
+      el.style.left = `${Math.random() * 100}%`;
+      el.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+      el.style.setProperty("--dx", `${-40 + Math.random() * 80}px`);
+      el.style.setProperty("--rot", `${200 + Math.random() * 520}deg`);
+      el.style.animationDuration = `${1.4 + Math.random() * 1.2}s`;
+      el.style.animationDelay = `${Math.random() * 0.25}s`;
+      frag.appendChild(el);
     }
-    confettiRaf = requestAnimationFrame(tick);
+    confettiLayer.appendChild(frag);
+    window.setTimeout(() => confettiLayer.replaceChildren(), 2800);
   }
-
-  function stopConfetti() {
-    if (confettiRaf) cancelAnimationFrame(confettiRaf);
-    confettiRaf = null;
-    confettiPieces = [];
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-  }
-
-  // Placeholder SVG generators — replace files in /assets/rewards/ later
-  // (already shipping as static SVGs)
 
   spinBtn.addEventListener("click", spin);
   claimBtn.addEventListener("click", hideWin);
-  winModal.querySelector(".modal__backdrop").addEventListener("click", hideWin);
-  window.addEventListener("resize", () => {
-    if (!winModal.hidden) resizeConfetti();
-  });
+  modalBackdrop.addEventListener("click", hideWin);
 
-  makeSparkles();
-  makeLights();
+  setupCanvas();
+  paintWheel();
+  setRotator(0, false, 0);
   renderRewardRail();
-  drawWheel();
   updateSpinsUI();
 })();

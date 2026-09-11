@@ -2,16 +2,20 @@
 
 Site tip cazinou cu roată de premii. La prima vizită primești **1000 rotiri**.
 
-## Premii
+## Premii (ordinea pe roată)
 
-| Premiu | Fișier imagine |
-|--------|----------------|
-| Pupic | `public/assets/rewards/pupic.svg` |
-| Îmbrățișare | `public/assets/rewards/imbratisare.svg` |
-| Mângâiere | `public/assets/rewards/mangaiere.svg` |
-| Backshots | `public/assets/rewards/backshots.svg` |
-
-Înlocuiește fișierele de mai sus cu pozele tale (`.jpg` / `.png` / `.webp`). Dacă schimbi extensia, actualizează și căile din `public/app.js` (obiectul `REWARDS`).
+| Premiu | Fișier |
+|--------|--------|
+| Back Shots | `public/assets/rewards/backshots.png` |
+| Lap Dance | `public/assets/rewards/lap-dance.png` |
+| Big Hug | `public/assets/rewards/big-hug.png` |
+| Hand Shake | `public/assets/rewards/handshake.png` |
+| 3 Some | `public/assets/rewards/threesome.png` |
+| o Suguluta | `public/assets/rewards/suguluta.png` |
+| Gang Bang | `public/assets/rewards/gangbang.png` |
+| SexPosition.club | `public/assets/rewards/sexposition.png` |
+| Romantic Date | `public/assets/rewards/romantic-date.png` |
+| Sabiutele cu Pula | `public/assets/rewards/sabiutele.png` |
 
 ## Local
 

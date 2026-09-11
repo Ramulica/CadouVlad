@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ROATA NOROCULUI ★ VIP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Playfair+Display:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true">
+      <div class="neon-beam neon-beam--a"></div>
+      <div class="neon-beam neon-beam--b"></div>
+      <div class="chips chips--left"></div>
+      <div class="chips chips--right"></div>
+      <div class="sparkle-field" id="sparkles"></div>
+    </div>
+
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand__crown">♛</span>
+        <span class="brand__name">CASINO VLAD</span>
+        <span class="brand__tag">21+</span>
+      </div>
+      <div class="spins-chip" id="spinsDisplay">
+        <span class="spins-chip__label">ROTIRI</span>
+        <span class="spins-chip__value">1000</span>
+      </div>
+    </header>
+
+    <main class="stage">
+      <p class="jackpot-marquee">
+        <span>★ JACKPOT LIVE ★ PUPIC ★ ÎMBRĂȚIȘARE ★ MÂNGÂIERE ★ BACKSHOTS ★ 1000 ROTIRI GRATUITE ★</span>
+        <span aria-hidden="true">★ JACKPOT LIVE ★ PUPIC ★ ÎMBRĂȚIȘARE ★ MÂNGÂIERE ★ BACKSHOTS ★ 1000 ROTIRI GRATUITE ★</span>
+      </p>
+
+      <h1 class="headline">
+        <span class="headline__glow">ROATA</span>
+        <span class="headline__gold">NOROCULUI</span>
+      </h1>
+      <p class="tagline">Învârte. Câștigă. Colectează premiul.</p>
+
+      <div class="wheel-arena">
+        <div class="wheel-glow"></div>
+        <div class="pointer" aria-hidden="true">
+          <div class="pointer__tip"></div>
+        </div>
+        <div class="wheel-frame">
+          <div class="wheel-lights" id="wheelLights"></div>
+          <canvas id="wheel" width="560" height="560" aria-label="Roata norocului"></canvas>
+          <button class="spin-btn" id="spinBtn" type="button">
+            <span class="spin-btn__ring"></span>
+            <span class="spin-btn__label">SPIN</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="reward-rail" id="rewardRail"></div>
+    </main>
+
+    <div class="modal" id="winModal" hidden>
+      <div class="modal__backdrop"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="modal__burst" aria-hidden="true"></div>
+        <p class="modal__eyebrow">★ AI CÂȘTIGAT ★</p>
+        <h2 class="modal__title" id="winTitle">Pupic</h2>
+        <div class="modal__image-wrap">
+          <img id="winImage" src="" alt="" class="modal__image" />
+        </div>
+        <p class="modal__copy" id="winCopy">Premiul tău te așteaptă.</p>
+        <button class="modal__cta" id="claimBtn" type="button">IA PREMIUL</button>
+      </div>
+    </div>
+
+    <canvas id="confetti" class="confetti-layer" aria-hidden="true"></canvas>
+    <script src="/app.js"></script>
+  </body>
+</html>

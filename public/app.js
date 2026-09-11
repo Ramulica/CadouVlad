@@ -1,13 +1,12 @@
 (() => {
   const STARTING_SPINS = 1000;
   const STORAGE_KEY = "casino-vlad-spins";
-  const BASE_SIZE = 480;
+  const BASE_SIZE = 560;
 
   const REWARDS = [
     {
       id: "backshots",
       label: "Back Shots",
-      short: "BACK",
       color: "#c41e3a",
       text: "#fff3d6",
       image: "/assets/rewards/backshots.png",
@@ -16,7 +15,6 @@
     {
       id: "lap-dance",
       label: "Lap Dance",
-      short: "LAP",
       color: "#1a6b4a",
       text: "#fff3d6",
       image: "/assets/rewards/lap-dance.png",
@@ -25,7 +23,6 @@
     {
       id: "big-hug",
       label: "Bug Hug",
-      short: "HUG",
       color: "#2a3d8f",
       text: "#fff3d6",
       image: "/assets/rewards/big-hug.png",
@@ -34,7 +31,6 @@
     {
       id: "handshake",
       label: "Hand Sacke",
-      short: "SHAKE",
       color: "#7a1fa2",
       text: "#fff3d6",
       image: "/assets/rewards/handshake.png",
@@ -43,7 +39,6 @@
     {
       id: "threesome",
       label: "3 Some",
-      short: "3SOME",
       color: "#b85c00",
       text: "#fff3d6",
       image: "/assets/rewards/threesome.png",
@@ -52,7 +47,6 @@
     {
       id: "suguluta",
       label: "o Suguluta",
-      short: "SUGU",
       color: "#8b1e3f",
       text: "#fff3d6",
       image: "/assets/rewards/suguluta.png",
@@ -61,7 +55,6 @@
     {
       id: "gangbang",
       label: "Gang Bang",
-      short: "GANG",
       color: "#0e5c5c",
       text: "#fff3d6",
       image: "/assets/rewards/gangbang.png",
@@ -70,7 +63,6 @@
     {
       id: "sexposition",
       label: "SexPosition.club",
-      short: "SPC",
       color: "#4a148c",
       text: "#fff3d6",
       image: "/assets/rewards/sexposition.png",
@@ -79,7 +71,6 @@
     {
       id: "romantic-date",
       label: "Romantic Date",
-      short: "DATE",
       color: "#a61b4a",
       text: "#fff3d6",
       image: "/assets/rewards/romantic-date.png",
@@ -88,7 +79,6 @@
     {
       id: "sabiutele",
       label: "Sabiutele cy Pula",
-      short: "SABII",
       color: "#1b4f72",
       text: "#fff3d6",
       image: "/assets/rewards/sabiutele.png",
@@ -96,7 +86,6 @@
     },
   ];
 
-  // One segment per reward, in the exact order requested
   const SEGMENTS = REWARDS.slice();
   const ARC = (Math.PI * 2) / SEGMENTS.length;
   const CONFETTI_COLORS = ["#f5c842", "#ff2d55", "#00f5d4", "#ff4ecd", "#ffffff", "#ffe566"];
@@ -119,6 +108,8 @@
   let rotationDeg = 0;
   let spinning = false;
   let audioCtx = null;
+  /** @type {Record<string, HTMLImageElement>} */
+  const images = {};
 
   function loadSpins() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -140,10 +131,44 @@
   }
 
   function setupCanvas() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     canvas.width = Math.round(BASE_SIZE * dpr);
     canvas.height = Math.round(BASE_SIZE * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function loadImages() {
+    return Promise.all(
+      REWARDS.map(
+        (r) =>
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              images[r.id] = img;
+              resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = r.image;
+          })
+      )
+    );
+  }
+
+  function drawCoverImage(img, dx, dy, dw, dh) {
+    const ir = img.width / img.height;
+    const tr = dw / dh;
+    let sx = 0;
+    let sy = 0;
+    let sw = img.width;
+    let sh = img.height;
+    if (ir > tr) {
+      sw = img.height * tr;
+      sx = (img.width - sw) / 2;
+    } else {
+      sh = img.width / tr;
+      sy = (img.height - sh) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
   function paintWheel() {
@@ -151,6 +176,7 @@
     const cx = size / 2;
     const cy = size / 2;
     const radius = size / 2 - 4;
+    const hub = 54;
 
     ctx.fillStyle = "#1a0a12";
     ctx.fillRect(0, 0, size, size);
@@ -159,31 +185,80 @@
       const seg = SEGMENTS[i];
       const start = i * ARC;
       const end = start + ARC;
+      const mid = start + ARC / 2;
+      const img = images[seg.id];
 
+      ctx.save();
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, radius, start, end);
       ctx.closePath();
+      ctx.clip();
+
       ctx.fillStyle = seg.color;
       ctx.fill();
 
+      if (img) {
+        // Place photo in outer half of the wedge
+        const photoR = radius * 0.62;
+        const px = cx + Math.cos(mid) * photoR;
+        const py = cy + Math.sin(mid) * photoR;
+        const photoSize = radius * 0.42;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(px, py, photoSize / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        drawCoverImage(img, px - photoSize / 2, py - photoSize / 2, photoSize, photoSize);
+        ctx.restore();
+
+        // gold ring around photo
+        ctx.beginPath();
+        ctx.arc(px, py, photoSize / 2, 0, Math.PI * 2);
+        ctx.strokeStyle = "#f5c842";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+
+      // dark strip near rim for text readability
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, start, end);
+      ctx.arc(cx, cy, radius * 0.78, end, start, true);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fill();
+
+      ctx.restore();
+
+      // segment border
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radius, start, end);
+      ctx.closePath();
       ctx.strokeStyle = "#f5c842";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
+      // full name along segment
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(start + ARC / 2);
+      ctx.rotate(mid);
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = seg.text;
-      ctx.font = "700 15px Oswald, sans-serif";
-      ctx.fillText(seg.short, radius - 18, 0);
+      const fontSize = seg.label.length > 14 ? 11 : seg.label.length > 10 ? 12 : 13;
+      ctx.font = `700 ${fontSize}px Oswald, sans-serif`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(0,0,0,0.85)";
+      ctx.strokeText(seg.label, radius - 10, 0);
+      ctx.fillStyle = "#fff3d6";
+      ctx.fillText(seg.label, radius - 10, 0);
       ctx.restore();
     }
 
+    // center hub
     ctx.beginPath();
-    ctx.arc(cx, cy, 52, 0, Math.PI * 2);
+    ctx.arc(cx, cy, hub, 0, Math.PI * 2);
     ctx.fillStyle = "#12080f";
     ctx.fill();
     ctx.lineWidth = 3;
@@ -332,8 +407,13 @@
   modalBackdrop.addEventListener("click", hideWin);
 
   setupCanvas();
-  paintWheel();
   setRotator(0, false, 0);
   renderRewardRail();
   updateSpinsUI();
+  spinBtn.disabled = true;
+
+  loadImages().then(() => {
+    paintWheel();
+    updateSpinsUI();
+  });
 })();
